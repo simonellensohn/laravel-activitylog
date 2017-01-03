@@ -28,6 +28,10 @@ trait DetectsChanges
             return [];
         }
 
+        if (array() !== static::$logAttributes) {
+            return collect(static::$logAttributes)->keys()->all();
+        }
+
         return static::$logAttributes;
     }
 
@@ -50,6 +54,36 @@ trait DetectsChanges
 
     public static function logChanges(Model $model): array
     {
-        return collect($model)->only($model->attributesToBeLogged())->toArray();
+        $changes = collect($model)->only($model->attributesToBeLogged());
+
+        if (isset(static::$logAttributes) && array() === static::$logAttributes) {
+            $changes->mapWithKeys(function ($item, $key) use ($model) {
+                if (array_key_exists($key, static::$logAttributes[$key])) {
+                    if (is_array(static::$logAttributes[$key])) {
+                        $property = static::$logAttributes[$key];
+                        $relation = $property['relation'];
+                        $key = $property['key'];
+                        $field = $property['field'];
+
+                        if ($model->$relation) {
+                            return [
+                                $key => [
+                                    'id' => $model->$relation->id,
+                                    'value' => $model->$relation->$field
+                                ]
+                            ];
+                        }
+
+                        return;
+                    } else {
+                        return [static::$logAttributes[$key] => $item];
+                    }
+                }
+
+                return [$key => $item];
+            });
+        }
+
+        return $changes->toArray();
     }
 }

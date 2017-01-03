@@ -49,7 +49,17 @@ trait DetectsChanges
             $properties['old'] = array_merge($nullProperties, $this->oldAttributes);
         }
 
-        return $properties;
+        $attributes = collect($properties['attributes']);
+        $old = collect(array_key_exists('old', $properties) ?? []);
+
+        if (self::isAssoc(static::$logAttributes)) {
+            $attributes = $attributes->flatten();
+            $old = $old->flatten();
+        }
+
+        $diff = collect($attributes)->diff($old);
+
+        return $diff->isNotEmpty() ? $properties : [];
     }
 
     public static function logChanges(Model $model): array
@@ -66,13 +76,10 @@ trait DetectsChanges
                         $key = $property['key'];
                         $field = $property['field'];
 
-                        if ($model->$relation) {
-                            return [
-                                $key => [
-                                    'id' => $model->$relation->id,
-                                    'value' => $model->$relation->$field
-                                ]
-                            ];
+                        $model = $model->newInstance($model->getAttributes());
+
+                        if ($model && $model->$relation) {
+                            return [$key => [$model->$relation->$field]];
                         }
 
                         return;

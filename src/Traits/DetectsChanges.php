@@ -28,7 +28,7 @@ trait DetectsChanges
             return [];
         }
 
-        if (array() !== static::$logAttributes) {
+        if (self::isAssoc(static::$logAttributes)) {
             return collect(static::$logAttributes)->keys()->all();
         }
 
@@ -55,12 +55,13 @@ trait DetectsChanges
     public static function logChanges(Model $model): array
     {
         $changes = collect($model)->only($model->attributesToBeLogged());
+        $attributes = isset(static::$logAttributes) ? static::$logAttributes : null;
 
-        if (isset(static::$logAttributes) && array() === static::$logAttributes) {
-            $changes->mapWithKeys(function ($item, $key) use ($model) {
-                if (array_key_exists($key, static::$logAttributes[$key])) {
-                    if (is_array(static::$logAttributes[$key])) {
-                        $property = static::$logAttributes[$key];
+        if ($attributes && self::isAssoc($attributes)) {
+            $changes = $changes->mapWithKeys(function ($item, $key) use ($model, $attributes) {
+                if (array_key_exists($key, $attributes)) {
+                    if (is_array($attributes[$key])) {
+                        $property = $attributes[$key];
                         $relation = $property['relation'];
                         $key = $property['key'];
                         $field = $property['field'];
@@ -76,7 +77,7 @@ trait DetectsChanges
 
                         return;
                     } else {
-                        return [static::$logAttributes[$key] => $item];
+                        return [$attributes[$key] => $item];
                     }
                 }
 
@@ -85,5 +86,11 @@ trait DetectsChanges
         }
 
         return $changes->toArray();
+    }
+
+    private static function isAssoc(array $arr)
+    {
+        if (array() === $arr) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }

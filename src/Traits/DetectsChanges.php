@@ -28,7 +28,7 @@ trait DetectsChanges
             return [];
         }
 
-        if (array() !== static::$logAttributes) {
+        if ([] !== static::$logAttributes) {
             return collect(static::$logAttributes)->keys()->all();
         }
 
@@ -56,7 +56,7 @@ trait DetectsChanges
     {
         $changes = collect($model)->only($model->attributesToBeLogged());
 
-        if (isset(static::$logAttributes) && array() === static::$logAttributes) {
+        if (isset(static::$logAttributes) && [] === static::$logAttributes) {
             $changes->mapWithKeys(function ($item, $key) use ($model) {
                 if (array_key_exists($key, static::$logAttributes[$key])) {
                     if (is_array(static::$logAttributes[$key])) {
@@ -69,8 +69,8 @@ trait DetectsChanges
                             return [
                                 $key => [
                                     'id' => $model->$relation->id,
-                                    'value' => $model->$relation->$field
-                                ]
+                                    'value' => $model->$relation->$field,
+                                ],
                             ];
                         }
 

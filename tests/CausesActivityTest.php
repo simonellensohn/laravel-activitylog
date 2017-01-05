@@ -16,4 +16,15 @@ class CausesActivityTest extends TestCase
 
         $this->assertCount(2, $causer->activity);
     }
+
+    /** @test */
+    public function the_causer_can_be_set_in_the_configuration()
+    {
+        $causer = User::first();
+        config(['laravel-activitylog.caused_by' => $causer]);
+
+        activity()->log('perform activity');
+
+        $this->assertCount(1, $causer->activity);
+    }
 }

@@ -82,7 +82,7 @@ trait DetectsChanges
                             return [$key => [$model->$relation->$field]];
                         }
 
-                        return;
+                        return [];
                     } else {
                         return [$attributes[$key] => $item];
                     }
